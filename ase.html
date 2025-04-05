@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Generator</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f8ff;
+}
+
+.container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.form-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    background-color: #e0f7fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.form-container input, .form-container select, .form-container button {
+    padding: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.timetable {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: #f1f8e9;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.header, .body {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 10px;
+}
+
+.header div, .column div {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    font-weight: bold;
+    background-color: #c8e6c9;
+    word-wrap: break-word;
+}
+
+.body {
+    display: flex;
+}
+
+.column {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    min-height: 50px;
+    background-color: #ffffff;
+}
+
+.column div {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 0;
+    word-wrap: break-word;
+}
+
+.course-box {
+    padding: 5px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    word-wrap: break-word;
+}
+
+button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Styles for PDF */
+#pdf-styles {
+    display: none;
+}
+
+.pdf-header {
+    background-color: #c8e6c9;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    border: 1px solid #ddd;
+}
+
+.pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pdf-table th, .pdf-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.pdf-table th {
+    background-color: #c8e6c9;
+    font-weight: bold;
+}
+
+/* Adjust the cell height based on the content */
+.pdf-cell {
+    height: auto;
+}
+
+.pdf-rect {
+    fill-opacity: 1;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Faculty Timetable Generator</h1>
+        <div class="form-container">
+            <!-- Input for classroom name -->
+            <input type="text" id="classroom" placeholder="Classroom Name">
+            <!-- Input for background color of the header -->
+            <label for="classColor">Classroom Color:</label>
+            <input type="color" id="classColor" value="#ffffff">
+            <input type="text" id="course" placeholder="Course Name">
+            <input type="text" id="courseCode" placeholder="Course Code">
+            <select id="day">
+                <option value="" disabled selected>Select Day</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+            </select>
+            Start Time
+            <input type="time" id="start-time" placeholder="Start Time">
+            End Time
+            <input type="time" id="end-time" placeholder="End Time">
+            <input type="text" id="venue" placeholder="Venue">
+            <label for="classColor">background Color:</label>
+            <input type="color" id="color" value="#ffffff">
+            <button onclick="addCourse()">Add Course</button>
+        </div>
+        <div class="timetable" id="timetable">
+            <div class="header">
+                <div>Day</div>
+                <div>Course</div>
+                <div>Course Code</div>
+                <div>Time</div>
+                <div>Venue</div>
+            </div>
+            <div class="body">
+                <div id="day-column" class="column"></div>
+                <div id="course-column" class="column"></div>
+                <div id="courseCode-column" class="column"></div>
+                <div id="time-column" class="column"></div>
+                <div id="venue-column" class="column"></div>
+            </div>
+        </div>
+        <button onclick="downloadTimetable()">Download Timetable</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        let courses = [];
+
+function addCourse() {
+    const course = document.getElementById('course').value;
+    const courseCode = document.getElementById('courseCode').value;
+    const day = document.getElementById('day').value;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
+    const venue = document.getElementById('venue').value;
+    const color = document.getElementById('color').value;
+
+    if (course && courseCode && day && startTime && endTime && venue && color) {
+        const formattedStartTime = formatTime(startTime);
+        const formattedEndTime = formatTime(endTime);
+
+        const dayColumn = document.getElementById('day-column');
+        const courseColumn = document.getElementById('course-column');
+        const courseCodeColumn = document.getElementById('courseCode-column');
+        const timeColumn = document.getElementById('time-column');
+        const venueColumn = document.getElementById('venue-column');
+
+        const courseBox = `<div class="course-box" style="background-color: ${color};">${day}</div>`;
+        const courseBoxCourse = `<div class="course-box" style="background-color: ${color};">${course}</div>`;
+        const courseBoxCourseCode = `<div class="course-box" style="background-color: ${color};">${courseCode}</div>`;
+        const courseBoxTime = `<div class="course-box" style="background-color: ${color};">${formattedStartTime} - ${formattedEndTime}</div>`;
+        const courseBoxVenue = `<div class="course-box" style="background-color: ${color};">${venue}</div>`;
+
+        dayColumn.innerHTML += courseBox;
+        courseColumn.innerHTML += courseBoxCourse;
+        courseCodeColumn.innerHTML += courseBoxCourseCode;
+        timeColumn.innerHTML += courseBoxTime;
+        venueColumn.innerHTML += courseBoxVenue;
+
+        courses.push({ day, course, courseCode, startTime: formattedStartTime, endTime: formattedEndTime, venue, color });
+    } else {
+        alert('Please fill out all fields.');
+    }
+}
+
+function formatTime(time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'pm' : 'am';
+    const formattedHours = ((hours + 11) % 12 + 1);
+    return `${formattedHours}:${minutes.toString().padStart(2, '0')}${period}`;
+}
+
+function downloadTimetable() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const classroom = document.getElementById('classroom').value;
+    const classColor = document.getElementById('classColor').value;
+
+    // Add classroom name at the top with background color
+    doc.setFillColor(classColor);
+    doc.rect(0, 0, 210, 20, 'F');
+    doc.setFontSize(16);
+    doc.setTextColor(0);
+    doc.text(classroom, 105, 10, { align: 'center' });
+    doc.setFontSize(12);
+
+    // Add header text
+    doc.text("Timetable", 105, 30, { align: 'center' });
+
+    let y = 40;
+    const cellWidth = 45; // Consistent cell width
+    const cellHeight = 10; // Consistent cell height
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text("Day", 20, y);
+    doc.text("Course", 60, y);
+    doc.text("Course Code", 100, y);
+    doc.text("Time", 140, y);
+    doc.text("Venue", 180, y);
+    doc.setFont(undefined, 'normal');
+
+    y += cellHeight;
+
+    courses.forEach(course => {
+        doc.setFillColor(course.color);
+        doc.setDrawColor(0, 0, 0);
+
+        // Draw consistent cells
+        doc.rect(1, y - 5, cellWidth, cellHeight, 'FD'); // Day cell
+        doc.rect(40, y - 5, cellWidth, cellHeight, 'FD'); // Course cell
+        doc.rect(86, y - 5, cellWidth, cellHeight, 'FD'); // Course code cell
+        doc.rect(126, y - 5, cellWidth, cellHeight, 'FD'); // Time cell
+        doc.rect(169, y - 5, cellWidth, cellHeight, 'FD'); // Venue cell
+
+        // Add course details
+        doc.text(course.day, 15, y);
+        doc.text(course.course, 45, y);
+        doc.text(course.courseCode, 100, y);
+        doc.text(`${course.startTime} - ${course.endTime}`, 127, y);
+        doc.text(course.venue, 175, y);
+
+        y += cellHeight + 5;
+    });
+
+    // Draw vertical lines
+    const columns = [1, 40, 85, 126, 169, 209];
+    columns.forEach(x => {
+        doc.line(x, 40, x, y - 5);
+    });
+
+    // Draw horizontal lines
+   // for (let i = 35; i <= y - 5; i += cellHeight + 0) {
+     //   doc.line(15, i, 215, i);
+    //}
+
+    doc.save("Alitimetable.pdf");
+}
+    </script>
+</body>
+</html>
