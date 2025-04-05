@@ -152,13 +152,13 @@ button:hover {
 </head>
 <body>
     <div class="container">
-        <h1>Faculty Timetable Generator</h1>
+        <h1>Timetable Generator</h1>
         <div class="form-container">
             <!-- Input for classroom name -->
             <input type="text" id="classroom" placeholder="Classroom Name">
             <!-- Input for background color of the header -->
-            <label for="classColor">Classroom Color:</label>
-            <input type="color" id="classColor" value="#ffffff">
+            <label for="classColor">Choose backgroundColor for class name:</label>
+            <input type="color" id="classColor" value="lightgreen">
             <input type="text" id="course" placeholder="Course Name">
             <input type="text" id="courseCode" placeholder="Course Code">
             <select id="day">
@@ -169,13 +169,15 @@ button:hover {
                 <option value="Thursday">Thursday</option>
                 <option value="Friday">Friday</option>
             </select>
-            Start Time
+            
             <input type="time" id="start-time" placeholder="Start Time">
-            End Time
+            Start Time:
+            
             <input type="time" id="end-time" placeholder="End Time">
+            End Time:
             <input type="text" id="venue" placeholder="Venue">
-            <label for="classColor">background Color:</label>
-            <input type="color" id="color" value="#ffffff">
+            <label for="classColor">background Color for row:</label>
+            <input type="color" id="color" value="skyblue">
             <button onclick="addCourse()">Add Course</button>
         </div>
         <div class="timetable" id="timetable">
